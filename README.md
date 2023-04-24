@@ -1,5 +1,5 @@
-### Hi there 👋
-Hi, I'm Kadircan 👋 Welcome my page
+### Hi, I'm Kadircan 👋 Welcome my page
+
 <!--
 **Kadircan9091/Kadircan9091** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 

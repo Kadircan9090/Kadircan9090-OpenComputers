@@ -1,3 +1,3 @@
 ### Hi there 👋
 
-Ben Kadircan Şahin Burada Minecraft Opencomputers Lua Code
+Ben Kadircan Şahin Burada Minecraft Opencomputers Lua Code Yazıyorum 

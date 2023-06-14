@@ -27,17 +27,18 @@ do
     end
 end
 
-local request = "username=" .. args[1] .. "&pin=" .. pin
-local response = internet.request("http://localhost/create", request)
+local request = "username=" .. (args[1] or "") .. "&pin=" .. (pin or "")
 
-local id
-repeat
-    local tmp = response.read()
-    if tmp then
-        id = tmp
-        break
+local success, response = pcall(internet.request, "http://localhost/create", request)
+
+if success then
+    local id = ""
+    for chunk in response do
+        id = id .. chunk
     end
-until not tmp
 
-response.close()
-cardwriter.write(id, "Bankcard", false)
+    response.close()
+    cardwriter.write(id, "Bankcard", false)
+else
+    print("Error occurred: " .. response)
+end

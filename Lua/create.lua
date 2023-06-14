@@ -10,21 +10,19 @@ local pin = ""
 do
     keypad.setDisplay("Your PIN")
     while true do
-        local action, _, _, char = event.pull()
-        if action == "keypad" then
-            if char == "#" then
-                keypad.setDisplay("Ok")
-                os.sleep(1)
-                keypad.setDisplay("")
-                break
-            elseif char == "*" then
-                keypad.setDisplay("Reseted")
-                pin = ""
-                os.sleep(1)
-                keypad.setDisplay("Your PIN")
-            else
-                pin = pin .. char
-            end
+        local _, _, _, char = event.pull("keypad")
+        if char == "#" then
+            keypad.setDisplay("Ok")
+            os.sleep(1)
+            keypad.setDisplay("")
+            break
+        elseif char == "*" then
+            keypad.setDisplay("Resetted")
+            pin = ""
+            os.sleep(1)
+            keypad.setDisplay("Your PIN")
+        else
+            pin = pin .. char
         end
     end
 end
@@ -43,4 +41,3 @@ until not tmp
 
 response.close()
 cardwriter.write(id, "Bankcard", false)
-

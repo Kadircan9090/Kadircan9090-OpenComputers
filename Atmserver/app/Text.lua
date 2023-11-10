@@ -1,1 +1,0 @@
-print("Kadircan Şahin")

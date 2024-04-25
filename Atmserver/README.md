@@ -1,6 +1,6 @@
 ### Hi there 👋
 * Minecraft OpenComputers Lua
-* 
+* I couldn't find how to make it work
 *
 *
 <!--

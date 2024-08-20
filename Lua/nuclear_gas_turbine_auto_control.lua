@@ -9,8 +9,8 @@ local computer = require("computer")
 local term = require("term")
 
 -- reactor = component.nc_fission_reactor
-reactor = component.proxy("c1976424-d94c-4522-90d9-d66013ff587e")
-reactor2 = component.proxy("276c184b-56a5-48b9-a8e2-49c6e70eb62a")
+reactor = component.proxy("aa77a84c-ecd3-4678-98d7-29961d71b252")
+reactor2 = component.proxy("865789e6-fd68-45a2-a2a0-4af145a819f0")
 
 turbine = component.it_gas_turbine
 
@@ -147,6 +147,19 @@ do
   
   -- Check if program termination switch is triggered.
   if rs.getInput(sides.back) > 0 then
+  print("Reactor Kapanıyor")
+  os.sleep(5)
+  rs.setBundledOutput(sides.left, colors.red, 0)
+  print("Reactor Kapanıyor")
+  os.sleep(5)
+  rs.setBundledOutput(sides.left, colors.purple, 0)
+  print("Turbine Kapanıyor")
+  os.sleep(5)
+  rs.setBundledOutput(sides.left, colors.black, 0)
+  os.sleep(5)
+  print("Generator Kapanıyor")
+  os.sleep(5)
+  rs.setBundledOutput(sides.left, colors.white, 0)
     resetBackUp()
     x = false
   end

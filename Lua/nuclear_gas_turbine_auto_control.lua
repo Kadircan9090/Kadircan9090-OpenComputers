@@ -147,17 +147,17 @@ do
   
   -- Check if program termination switch is triggered.
   if rs.getInput(sides.back) > 0 then
-  print("Reactor Kapanıyor")
+  print("Reactor closing")
   os.sleep(5)
   rs.setBundledOutput(sides.left, colors.red, 0)
-  print("Reactor Kapanıyor")
+  print("Reactor closing")
   os.sleep(5)
   rs.setBundledOutput(sides.left, colors.purple, 0)
-  print("Turbine Kapanıyor")
+  print("Turbine closing")
   os.sleep(5)
   rs.setBundledOutput(sides.left, colors.black, 0)
   os.sleep(5)
-  print("Generator Kapanıyor")
+  print("Generator closing")
   os.sleep(5)
   rs.setBundledOutput(sides.left, colors.white, 0)
     resetBackUp()

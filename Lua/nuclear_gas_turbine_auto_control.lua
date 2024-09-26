@@ -146,7 +146,7 @@ do
   end
   
   -- Check if program termination switch is triggered.
-  if rs.getInput(sides.back) > 0 then
+  if rs.getInput(sides.top) > 0 then
   print("Reactor closing")
   os.sleep(5)
   rs.setBundledOutput(sides.left, colors.red, 0)

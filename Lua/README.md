@@ -1,7 +1,7 @@
 ### Hi there 👋
 * Minecraft OpenComputers Lua
-* ATM.lua there is problem
-* Pin_Create.lua there is problem
+* ATM.lua Problematic Code
+* Pin_Create.lua Problematic Code
 *
 *
 *

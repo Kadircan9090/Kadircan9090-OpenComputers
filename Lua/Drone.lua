@@ -1,44 +1,34 @@
-local d = component.proxy(component.list("drone")())
-local t = component.proxy(component.list("tunnel")())
+local modem = component.proxy(component.list("modem")())
+local connected
+ 
+modem.open(122)
+ 
+computer.beep(500, .2)
+computer.beep(700, .2)
+ 
+::connect::
+local _, _, from, port, _, message = computer.pullSignal()
+ 
+if (message == "dcaccepted") then
+  computer.beep(800, .2)
+  computer.beep(800, .2)
+  connected = from
+else 
+  goto connect 
+end
+ 
 while true do
-  local evt,_,sender,_,_,name,cmd,a,b,c = computer.pullSignal()
-  if evt == "modem_message" and name == d.name() then
-    if cmd == "gst" then
-      t.send(d.name(),"gst",d.getStatusText())
-    end
-    if cmd == "sst" then
-      t.send(d.name(),"sst",d.setStatusText(a))
-    end
-    if cmd == "mov" then
-      d.move(a,b,c)
-    end
-    if cmd == "gos" then
-      t.send(d.name(),"gos",d.getOffset())
-    end
-    if cmd == "gve" then
-      t.send(d.name(),"gv",d.getVelocity())
-    end
-    if cmd == "gmv" then
-      t.send(d.name(),"gmv",d.getMaxVelocity())
-    end
-    if cmd == "gac" then
-      t.send(d.name(),"ga",d.getAcceleration())
-    end
-    if cmd == "sac" then
-      d.setAcceleration(a)
-    end
-    if cmd == "glc" then
-      t.send(d.name(),"glc",d.getLightColor())
-    end
-    if cmd == "slc" then
-      d.setLightColor(a)
-    end
-    if cmd == "dct" then
-      local b, s = d.detect(a)
-      t.send(d.name(),"dct",b,s)
-    end
-    if cmd == "cmp" then
-      t.send(d.name(),"c",d.compare(a))
+  local _, _, from, port, _, message, arg1 = computer.pullSignal() 
+ 
+  if(message == "call") then
+    if arg1 then
+      local l, err  = load("return "..arg1)
+      if l then
+        local ok, f = pcall(l)
+        if ok then
+          f()
+        end
+      end
     end
   end
 end

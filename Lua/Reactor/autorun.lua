@@ -1,3 +1,3 @@
 local shell = require("shell")
 
-  shell.execute("/home/.lua")
+  shell.execute("/home/Reactor/.lua")

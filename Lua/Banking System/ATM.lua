@@ -135,7 +135,7 @@ while true do
 			end
 			break
 		else
-			error_("Banka kartınızla ilgili sorunlarınız var")
+			error_("You have problems with your bank card")
 			os.sleep(2)
 			start_screen()
 		end

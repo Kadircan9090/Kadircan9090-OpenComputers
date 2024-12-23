@@ -1,6 +1,6 @@
 --[[ Funky Locomotion Elevator
-     Created for the Youtube channel https://youtube.com/user/nzHook 2018
-     myRail Episode Showing Usage: https://youtu.be/Fv0cJO-NO2c
+     Created for the Youtube channel https://www.youtube.com/@KadircanSahin28
+     Kadircan Şahin Episode Showing Usage: https://www.youtube.com/@KadircanSahin28
      
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

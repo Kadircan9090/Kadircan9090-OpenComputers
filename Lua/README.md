@@ -3,7 +3,7 @@
 * ATM.lua Problematic Code
 * Pin_Create.lua Problematic Code
 <!--
-**Kadircan9091/Kadircan9090** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+**Kadircan9090/Kadircan9090** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 
 Here are some ideas to get you started:
 

@@ -1,143 +1,102 @@
-local event = require("event")
-local os = require("os")
-local term = require("term")
-local io = require("io")
-local internet = require("internet")
 local component = require("component")
-local gpu = component.gpu
-local magreader = component.os_magreader
-local redstone = component.redstone
-local inventory_controller = component.inventory_controller
-local url = "http://localhost/"
-gpu.setResolution(160, 50)
-gpu.setBackground(0xFFFFFF)
-gpu.setForeground(0x000000)
-local function error_(message)
-	gpu.setForeground(0xFF0000)
-	print("Error: " .. message)
-	gpu.setForeground(0x000000)
+local event = require("event")
+local term = require("term")
+local fs = require("filesystem")
+local magReader = component.os_magreader
+
+local accountsFile = "/accounts.txt"
+local accounts = {}
+
+-- Hesapları yükle
+function loadAccounts()
+  accounts = {}
+  if fs.exists(accountsFile) then
+    for line in io.lines(accountsFile) do
+      local user, balance = line:match("([^:]+):(%d+)")
+      accounts[user] = tonumber(balance)
+    end
+  end
 end
-local function start_screen()
-	term.clear()
-	print("Welcome ATM")
-	print("Insert Card")
+
+-- Hesapları kaydet
+function saveAccounts()
+  local file = io.open(accountsFile, "w")
+  for user, balance in pairs(accounts) do
+    file:write(user .. ":" .. balance .. "\n")
+  end
+  file:close()
 end
-local function count_iron()
-	local count = 0
-	for i = 1, 18 do
-		local item = inventory_controller.getStackInSlot(0, i)
-		if not (item == nil) then
-			if item.name == "minecraft:iron_ingot" then
-				count = count + item.size
-			end
-		end
-	end
-	return count
+
+-- Para işlemleri
+function deposit(user, amount)
+  accounts[user] = (accounts[user] or 0) + amount
+  saveAccounts()
 end
-local function choose_screen(name, now)
-	term.clear()
-	print("Welcome ATM")
-	print("Hello, " .. name)
-	print("Now Irons: " .. tostring(now))
-	print("")
-	print("Choose:")
-	print("1) - Deposit")
-	print("2) - Withdraw")
-	print("")
-	print("CTRL + ALT + C to exit")
+
+function withdraw(user, amount)
+  if (accounts[user] or 0) >= amount then
+    accounts[user] = accounts[user] - amount
+    saveAccounts()
+    return true
+  else
+    return false
+  end
 end
-local function deposit_screen(name, now)
-	term.clear()
-	print("Welcome ATM")
-	print("Hello, " .. name)
-	print("Now Irons: " .. tostring(now))
-	print("")
-	print("Write how much you want to deposit irons")
+
+-- Ana fonksiyon
+function runATM()
+  loadAccounts()
+  term.clear()
+  print("ATM'ye Hoşgeldiniz")
+  print("Lütfen kartınızı okutun...")
+
+  local _, _, _, _, _, user = event.pull("magData")
+  print("Merhaba, " .. user)
+  if accounts[user] == nil then
+    print("Yeni hesap oluşturuluyor...")
+    accounts[user] = 0
+    saveAccounts()
+  end
+
+  while true do
+    print("\n1. Bakiye Görüntüle")
+    print("2. Para Yatır")
+    print("3. Para Çek")
+    print("4. Çıkış")
+    io.write("> ")
+    local choice = io.read()
+
+    if choice == "1" then
+      print("Bakiyeniz: " .. accounts[user])
+    elseif choice == "2" then
+      io.write("Yatırılacak miktar: ")
+      local amount = tonumber(io.read())
+      if amount and amount > 0 then
+        deposit(user, amount)
+        print("Yatırma başarılı. Yeni bakiye: " .. accounts[user])
+      else
+        print("Geçersiz miktar.")
+      end
+    elseif choice == "3" then
+      io.write("Çekilecek miktar: ")
+      local amount = tonumber(io.read())
+      if amount and amount > 0 then
+        if withdraw(user, amount) then
+          print("Çekme başarılı. Yeni bakiye: " .. accounts[user])
+        else
+          print("Yetersiz bakiye.")
+        end
+      else
+        print("Geçersiz miktar.")
+      end
+    elseif choice == "4" then
+      print("Çıkış yapılıyor. İyi günler!")
+      break
+    else
+      print("Geçersiz seçim.")
+    end
+  end
 end
-local function deposit_count_screen(name, now, irons, count)
-	term.clear()
-	print("Welcome ATM")
-	print("Hello, " .. name)
-	print("Now Irons: " .. tostring(now))
-	print("")
-	print("Irons: " .. tostring(count) .. " / " .. irons)
-end
-local function withdraw_screen(name, now)
-	term.clear()
-	print("Welcome ATM")
-	print("Hello, " .. name)
-	print("Now Irons: " .. tostring(now))
-	print("")
-	print("Write how much you want to withdraw irons")
-end
-local function loading_screen(name, now)
-	term.clear()
-	print("Welcome ATM")
-	print("Hello, " .. name)
-	print("Now Irons: " .. tostring(now))
-	print("")
-	print("Loading...")
-end
-start_screen()
-local id = ""
-local name = ""
-local irons = 0
-while true do
-	local event, _, _, _id = event.pull()
-	if event == "magData" then
-		local response = internet.request(url .. "/getUsername", _id)
-		local _name = response()
-		if not (_name == nil) then
-			id = _id
-			name = _name
-			now_irons = tonumber(internet.request(url .. "/getIrons", _id)())
-			while true do
-				choose_screen(name, now_irons)
-				local selection = io.read()
-				if selection == "1" then
-					deposit_screen(name, now_irons)
-					local irons = tonumber(io.read())
-					redstone.setOutput(0, 15)
-					local count = 0
-					repeat
-						local count = count_iron()
-						deposit_count_screen(name, now_irons, irons, count)
-					until count == irons
-					redstone.setOutput(0, 0)
-					loading_screen(name, now_irons)
-					repeat
-						local count = count_iron()
-					until count == 0
-					internet.request(url .. "/deposit", "id=" .. id .. "&amount=" .. irons)
-					now_irons = tonumber(internet.request(url .. "/getIrons", _id)())
-				elseif selection == "2" then
-					withdraw_screen(name, now_irons) 
-					local irons = tonumber(io.read())
-					print("Write your PIN")
-					local pin = io.read()
-					loading_screen(name, now_irons)
-					local msg = internet.request(url .. "/withdraw", "id=" .. id .. "&pin=" .. pin .."&amount=" .. irons)()
-					if msg == "wrongpin" then
-						error_("Wrong PIN")
-						os.sleep(2)
-					elseif msg == "dontenough" then
-						error_("Don't enough irons")
-						os.sleep(2)
-					else
-						loading_screen(name, now_irons)
-						for i=1, irons do
-							redstone.setOutput(1, 15)
-							redstone.setOutput(1, 0)
-						end
-						now_irons = tonumber(internet.request(url .. "/getIrons", _id)())
-					end
-				end
-			end
-			break
-		else
-			error_("You have problems with your bank card")
-			os.sleep(2)
-			start_screen()
-		end
-	end
-end
+
+-- Çalıştır
+runATM()

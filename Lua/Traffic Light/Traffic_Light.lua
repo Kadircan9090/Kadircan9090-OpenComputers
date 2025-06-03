@@ -1,37 +1,55 @@
 local component = require("component")
 local sides = require("sides")
-local colors = require("colors")
-local os = require("os")
+local term = require("term")
+local gpu = component.gpu
+local adapter = component.proxy(component.get("604cd1e3-331e-40c0-8382-9175f322093e"))
 
--- Adapter bileşenini bul
-local adapter = component.proxy(component.list("adapter")())
+local side = sides.top  -- Adapter'ın bağlı olduğu taraf
 
--- Bağlı olduğu yön (örnek: doğu yönü)
-local cableSide = sides.east  -- ihtiyaca göre değiştir
+-- Renk indeksleri (bundled cable için)
+local RED = 0
+local YELLOW = 1
+local GREEN = 5
 
--- Işıkları kontrol et
-local function setLight(color)
-  adapter.setBundledOutput(cableSide, color)
+function clear()
+  term.clear()
+  term.setCursor(1,1)
+end
+
+function drawState(state)
+  clear()
+  if state == "red" then
+    gpu.setForeground(0xFF0000)
+    print("🟥 KIRMIZI - DUR")
+  elseif state == "yellow" then
+    gpu.setForeground(0xFFFF00)
+    print("🟨 SARI - HAZIRLAN")
+  elseif state == "green" then
+    gpu.setForeground(0x00FF00)
+    print("🟩 YEŞİL - GEÇ")
+  end
+  gpu.setForeground(0xFFFFFF) -- Varsayılan rengi geri ayarla
+end
+
+function setLights(r, y, g)
+  adapter.setBundledOutput(side, RED, r and 255 or 0)
+  adapter.setBundledOutput(side, YELLOW, y and 255 or 0)
+  adapter.setBundledOutput(side, GREEN, g and 255 or 0)
 end
 
 while true do
-  -- 1. Kırmızı ışık (dur)
-  setLight(colors.red)
-  print("Kırmızı ışık: DUR")
+  -- Kırmızı ışık
+  setLights(true, false, false)
+  drawState("red")
+  os.sleep(20)
+
+  -- Sarı ışık
+  setLights(false, true, false)
+  drawState("yellow")
+  os.sleep(1)
+
+  -- Yeşil ışık
+  setLights(false, false, true)
+  drawState("green")
   os.sleep(5)
-
-  -- 2. Sarı ışık (hazırlan)
-  setLight(colors.yellow)
-  print("Sarı ışık: HAZIRLAN")
-  os.sleep(2)
-
-  -- 3. Yeşil ışık (geç)
-  setLight(colors.green)
-  print("Yeşil ışık: GEÇ")
-  os.sleep(5)
-
-  -- 4. Sarı ışık (yavaşla)
-  setLight(colors.yellow)
-  print("Sarı ışık: YAVAŞLA")
-  os.sleep(2)
 end

@@ -2,74 +2,126 @@ local component = require("component")
 local term = require("term")
 local event = require("event")
 local sides = require("sides")
-local energyDevice = component.energy_device
-local rs = component.redstone
 
-local outputSide = sides.back
+local cap = component.capacitor_bank
+local tank = component.fluid_tank
+local redstone = component.redstone
+local gpu = component.gpu
+local beep = component.beep
 
-local generatorOn = false
-local autoMode = true
+gpu.setResolution(60, 20)
+term.clear()
 
-local startThreshold = 0.20
-local stopThreshold = 0.95
+-- Ayarlar
+local startThreshold = 0.25
+local stopThreshold  = 0.90
+local minFuelPercent = 0.10
+local side = sides.back
 
-local function getEnergyPercent()
-  local current = energyDevice.getEnergyStored()
-  local max = energyDevice.getMaxEnergyStored()
-  if max == 0 then return 0 end
-  return current / max
+local mode = "auto"
+local running = false
+local alarmActive = false
+
+-- Tank bilgisi
+local function getFuel()
+  local fluids = tank.getFluids()
+  if fluids and fluids[1] then
+    return fluids[1].amount, tank.getCapacity()
+  end
+  return 0, tank.getCapacity()
 end
 
-local function updateGenerator()
-  rs.setOutput(outputSide, generatorOn and 15 or 0)
+local function bar(x, y, percent, color)
+  local width = 40
+  local fill = math.floor(width * percent)
+  gpu.setForeground(color)
+  term.setCursor(x, y)
+  term.write("[" .. string.rep("=", fill) .. string.rep(" ", width - fill) .. "]")
 end
 
-local function drawUI()
-  term.setCursor(1,1)
+local function alarm(on)
+  if on and not alarmActive then
+    alarmActive = true
+    beep.beep(1200, 0.3)
+  elseif not on then
+    alarmActive = false
+  end
+end
+
+local function draw(energyP, fuelP)
   term.clear()
-  local percent = getEnergyPercent()
-  print("=== Diesel Generator Control ===\n")
-  print("Mode: " .. (autoMode and "AUTO" or "MANUAL"))
-  print(string.format("Energy: %.1f%%", percent * 100))
-  local bar = "[" .. string.rep("█", math.floor(percent * 30)) .. string.rep("░", 30 - math.floor(percent * 30)) .. "]"
-  print(bar)
-  print("Generator: " .. (generatorOn and "ON ✅" or "OFF ❌"))
-  print("\n[s] Start/Stop (Manual Mode)")
-  print("[m] Toggle Mode (Auto/Manual)")
-  print("[q] Quit")
-end
 
--- Başlat
-updateGenerator()
-drawUI()
+  gpu.setForeground(0x00FF00)
+  term.setCursor(20, 1)
+  term.write("ENDER IO GENERATOR CONTROL")
+
+  gpu.setForeground(0xFFFFFF)
+  term.setCursor(5, 3)
+  term.write("Energy: " .. math.floor(energyP * 100) .. "%")
+  bar(5, 4, energyP, 0x00AAFF)
+
+  term.setCursor(5, 6)
+  term.write("Fuel:   " .. math.floor(fuelP * 100) .. "%")
+  bar(5, 7, fuelP, fuelP > minFuelPercent and 0x00FF00 or 0xFF0000)
+
+  term.setCursor(5, 9)
+  gpu.setForeground(running and 0xFFAA00 or 0xAAAAAA)
+  term.write("Generator: " .. (running and "RUNNING" or "STOPPED"))
+
+  gpu.setForeground(0xFFFFFF)
+  term.setCursor(5, 11)
+  term.write("Mode: " .. mode:upper() .. " (A=Auto  M=Manual)")
+
+  if fuelP < minFuelPercent then
+    gpu.setForeground(0xFF0000)
+    term.setCursor(5, 13)
+    term.write("!!! LOW FUEL ALERT !!!")
+  end
+end
 
 while true do
-  if autoMode then
-    local level = getEnergyPercent()
-    if level <= startThreshold then
-      generatorOn = true
-    elseif level >= stopThreshold then
-      generatorOn = false
-    end
-    updateGenerator()
+  local stored = cap.getEnergyStored()
+  local max = cap.getMaxEnergyStored()
+  local energyP = stored / max
+
+  local fuel, fuelMax = getFuel()
+  local fuelP = fuel / fuelMax
+
+  -- ALARM
+  if fuelP < minFuelPercent then
+    alarm(true)
+    redstone.setOutput(side, 0)
+    running = false
+  else
+    alarm(false)
   end
 
-  drawUI()
+  -- AUTO MODE
+  if mode == "auto" and fuelP >= minFuelPercent then
+    if energyP < startThreshold then
+      redstone.setOutput(side, 15)
+      running = true
+    elseif energyP > stopThreshold then
+      redstone.setOutput(side, 0)
+      running = false
+    end
+  end
 
-  -- key_down event: returns (name, address, char, code, playerName)
-  local evt, _, char = event.pull(1, "key_down")
-  if evt then
-    local key = string.char(char):lower()
-    if key == "s" and not autoMode then
-      generatorOn = not generatorOn
-      updateGenerator()
-    elseif key == "m" then
-      autoMode = not autoMode
-    elseif key == "q" then
-      term.clear()
-      print("Exited.")
-      break
+  draw(energyP, fuelP)
+
+  local _, _, _, key = event.pull(0.5, "key_down")
+  if key then
+    if key == 0x1E then mode = "auto" end
+    if key == 0x32 then mode = "manual" end
+
+    if mode == "manual" and fuelP >= minFuelPercent then
+      if key == 0x18 then
+        redstone.setOutput(side, 15)
+        running = true
+      elseif key == 0x2E then
+        redstone.setOutput(side, 0)
+        running = false
+      end
     end
   end
 end
-
